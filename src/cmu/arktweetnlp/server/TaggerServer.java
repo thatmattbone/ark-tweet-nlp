@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import cmu.arktweetnlp.Tagger;
 import cmu.arktweetnlp.Tagger.TaggedToken;
+import cmu.arktweetnlp.Twokenize;
 import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.ServerRunner;
 
@@ -39,6 +40,30 @@ public class TaggerServer extends NanoHTTPD {
     	return new NanoHTTPD.Response(errorObj.toString());
     }
     
+    private JSONObject tokenizeAndTag(String text) {
+		JSONObject tokenObj = new JSONObject();
+		tokenObj.put("original", text);
+		
+		List<TaggedToken> taggedTokens = tagger.tokenizeAndTag(text);
+		for (TaggedToken taggedToken: taggedTokens) {
+			tokenObj.append("tags", taggedToken.tag);
+			tokenObj.append("tokens", taggedToken.token);
+		}
+		return tokenObj;
+    }
+    
+    private JSONObject justTokenize(String text) {
+		JSONObject tokenObj = new JSONObject();
+		tokenObj.put("original", text);
+		
+		List<String> tokens = Twokenize.tokenize(text);
+		
+		for (String token: tokens) {
+			tokenObj.append("tokens", token);
+		}
+		return tokenObj;    	
+    }
+    
     
 	@Override
 	public Response serve(String uri, 
@@ -55,23 +80,16 @@ public class TaggerServer extends NanoHTTPD {
 			return new NanoHTTPD.Response(new JSONObject().toString());
 		}
 		
-		
 		JSONObject jsonObj = new JSONObject();
 		
 		for (Map.Entry<String, String> entry: params.entrySet()) {
 			if (!entry.getKey().equals("NanoHttpd.QUERY_STRING")) {
 				
-				
-				JSONObject tokenObj = new JSONObject();
-				tokenObj.put("original", entry.getValue());
-				
-				List<TaggedToken> tokens = tagger.tokenizeAndTag(entry.getValue());
-				for (TaggedToken taggedToken: tokens) {
-					tokenObj.append("tags", taggedToken.tag);
-					tokenObj.append("tokens", taggedToken.token);
+				if (uri.equals("/tokenize")) {
+					jsonObj.put(entry.getKey(), this.justTokenize(entry.getValue()));	
+				} else {
+					jsonObj.put(entry.getKey(), this.tokenizeAndTag(entry.getValue()));
 				}
-				
-				jsonObj.put(entry.getKey(), tokenObj);
 			}
 		}
 		
