@@ -19,7 +19,7 @@ public class TaggerServer extends NanoHTTPD {
     public TaggerServer() {
         super(8080);
         
-        String modelFile = "/home/mbone/voxsup/ark-tweet-nlp/model.20120919";
+        String modelFile = "/cmu/arktweetnlp/model.20120919";
         
 		tagger = new Tagger();
 		try {
